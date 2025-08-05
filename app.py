@@ -24,7 +24,7 @@ application = (
     .token(TOKEN)
     .build()
 )
-from AI_Consulting_Bot import start, handle_text
+from ai_consulting_bot import start, handle_text
 
 application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
