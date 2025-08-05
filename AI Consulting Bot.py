@@ -8,11 +8,6 @@ from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTyp
 
 load_dotenv()
 
-print("DEBUG: cwd =", os.getcwd())
-print("DEBUG: files in cwd:", os.listdir())
-print("DEBUG: TELEGRAM_TOKEN:", os.getenv("TELEGRAM_TOKEN"))
-print("DEBUG: AUTH_KEY:", os.getenv("AUTH_KEY"))
-
 if not os.getenv("TELEGRAM_TOKEN") or not os.getenv("AUTH_KEY"):
     print("❌ Отсутствует TELEGRAM_TOKEN или AUTH_KEY")
     sys.exit(1)
