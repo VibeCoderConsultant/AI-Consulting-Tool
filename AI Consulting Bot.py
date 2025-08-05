@@ -9,7 +9,7 @@ from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTyp
 load_dotenv()
 
 if not os.getenv("TELEGRAM_TOKEN") or not os.getenv("AUTH_KEY"):
-    print("❌ Отсутствует TELEGRAM_TOKEN или AUTH_KEY")
+    print("Missing TELEGRAM_TOKEN or AUTH_KEY")
     sys.exit(1)
     
 VERIFY_CERT_PATH = os.getenv("VERIFY_CERT_PATH")
@@ -69,7 +69,7 @@ def build_rewrite_messages(text: str, lang: str) -> list:
             "Тебе передают описание бизнес-ситуации в 10–20 словах. Текст может быть на другом языке (например, на английском). "
             "Твоя задача: "
             "1. Перевести его на русский. "
-            "2. Переформулировать как и выразительный action заголовок для презентации в одном предложении на 15-20 слов. "
+            "2. Переформулировать как выразительный action заголовок для презентации в одном предложении на 15-20 слов. "
             "3. Сосредоточься на ключевой мысли, избегай общих формулировок, но не укроачивай ответ слишком сильно. "
             "Отвечай только на русском."
         )
