@@ -27,9 +27,7 @@ def init_telegram_app():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     
-    application.bot.initialize()
-    logger.info("Telegram application initialized")
-    
+    logger.info("Telegram application created")
     return application
 
 telegram_app = init_telegram_app()
@@ -52,7 +50,11 @@ def webhook():
         logger.error(f"Webhook processing error: {e}")
         return "Internal Server Error", 500
 
-async def set_webhook():
+async def setup_bot():
+    await telegram_app.initialize()
+    await telegram_app.start()
+    logger.info("Telegram application initialized")
+    
     domain = os.getenv("RENDER_EXTERNAL_URL")
     if not domain:
         logger.error("RENDER_EXTERNAL_URL is not set!")
@@ -63,15 +65,20 @@ async def set_webhook():
     
     bot_username = telegram_app.bot.username
     logger.info(f"Webhook set for bot @{bot_username} to: {webhook_url}")
+    
+    return bot_username
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
     try:
-        loop.run_until_complete(set_webhook())
+        bot_username = loop.run_until_complete(setup_bot())
         
         port = int(os.environ.get("PORT", 5000))
         app.run(host="0.0.0.0", port=port)
+    except Exception as e:
+        logger.exception(f"Failed to initialize bot: {e}")
     finally:
+        loop.run_until_complete(telegram_app.stop())
         loop.close()
