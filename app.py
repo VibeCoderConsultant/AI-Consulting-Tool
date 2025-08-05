@@ -38,47 +38,65 @@ def health_check():
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    if request.headers.get("content-type") != "application/json":
-        abort(403)
-        
     try:
+        if request.headers.get("content-type") != "application/json":
+            logger.warning("Invalid content-type")
+            abort(400, "Invalid content-type")
+        
         data = request.get_json()
+        if not data:
+            logger.warning("Empty request body")
+            abort(400, "Empty request body")
+        
         update = Update.de_json(data, telegram_app.bot)
+        
         telegram_app.update_queue.put(update)
+        
         return "OK", 200
     except Exception as e:
-        logger.error(f"Webhook processing error: {e}")
+        logger.exception(f"Webhook error: {e}")
         return "Internal Server Error", 500
 
 async def setup_bot():
-    await telegram_app.initialize()
-    await telegram_app.start()
-    logger.info("Telegram application initialized")
-    
-    domain = os.getenv("RENDER_EXTERNAL_URL")
-    if not domain:
-        logger.error("RENDER_EXTERNAL_URL is not set!")
-        return
-    
-    webhook_url = f"{domain}/webhook"
-    await telegram_app.bot.set_webhook(webhook_url)
-    
-    bot_username = telegram_app.bot.username
-    logger.info(f"Webhook set for bot @{bot_username} to: {webhook_url}")
-    
-    return bot_username
+    try:
+        await telegram_app.initialize()
+        await telegram_app.start()
+        logger.info("Telegram application initialized and started")
+        
+        domain = os.getenv("RENDER_EXTERNAL_URL")
+        if not domain:
+            logger.error("RENDER_EXTERNAL_URL is not set!")
+            return False
+        
+        webhook_url = f"{domain}/webhook"
+        result = await telegram_app.bot.set_webhook(webhook_url)
+        
+        logger.info(f"Webhook set result: {result}")
+        
+        webhook_info = await telegram_app.bot.get_webhook_info()
+        logger.info(f"Webhook info: {webhook_info}")
+        
+        return True
+    except Exception as e:
+        logger.exception(f"Setup bot failed: {e}")
+        return False
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
     try:
-        bot_username = loop.run_until_complete(setup_bot())
+        success = loop.run_until_complete(setup_bot())
         
+        if not success:
+            logger.error("Bot setup failed, exiting")
+            exit(1)
+
         port = int(os.environ.get("PORT", 5000))
-        app.run(host="0.0.0.0", port=port)
+        logger.info(f"Starting Flask server on port {port}")
+        app.run(host="0.0.0.0", port=port, use_reloader=False)
     except Exception as e:
-        logger.exception(f"Failed to initialize bot: {e}")
+        logger.exception(f"Failed to start: {e}")
     finally:
         loop.run_until_complete(telegram_app.stop())
         loop.close()
