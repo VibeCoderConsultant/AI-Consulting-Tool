@@ -1,5 +1,6 @@
 import os
 import logging
+import asyncio
 from flask import Flask, request, abort
 from telegram import Bot, Update
 from telegram.ext import (
@@ -35,23 +36,31 @@ def health():
 
 @app.route(f"/webhook/{TOKEN}", methods=["POST"])
 def webhook():
-    logger.info("Received webhook request headers: %s", dict(request.headers))
+    logger.info("Received webhook headers: %s", dict(request.headers))
     payload = request.get_data(as_text=True)
-    logger.info("Received Webhook payload: %s", payload)
+    logger.info("Payload: %s", payload)
+
     if request.headers.get("content-type") != "application/json":
         abort(403)
+
     data = request.get_json(force=True)
     update = Update.de_json(data, bot)
     application.dispatcher.process_update(update)
     return "OK", 200
 
 if __name__ == "__main__":
-    domain = os.environ.get("RENDER_EXTERNAL_URL")  
+    domain = os.environ.get("RENDER_EXTERNAL_URL")
     webhook_url = f"{domain}/webhook/{TOKEN}"
-    bot.set_webhook(webhook_url)
-    info = BOT.get_webhook_info()
-    logger.info("Webhook info: url=%s, has_custom_certificate=%s, pending_update_count=%s",
-            info.url, info.has_custom_certificate, info.pending_update_count)
+
+    asyncio.run(bot.set_webhook(webhook_url))
+
+    info = asyncio.run(bot.get_webhook_info())
+    logger.info(
+        "Webhook info: url=%s, pending_count=%s",
+        info.url,
+        getattr(info, "pending_update_count", None),
+    )
+
     logger.info("Webhook set to %s", webhook_url)
 
     port = int(os.environ.get("PORT", 5000))
