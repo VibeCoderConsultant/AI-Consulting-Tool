@@ -1,14 +1,13 @@
 import os
 import logging
 import asyncio
-from flask import Flask, request
+from flask import Flask, request, abort
 from telegram import Update
 from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
     filters,
-    CallbackContext
 )
 
 logging.basicConfig(
@@ -28,12 +27,12 @@ def init_telegram_app():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     
+    application.bot.initialize()
+    logger.info("Telegram application initialized")
+    
     return application
 
 telegram_app = init_telegram_app()
-logger.info("Telegram application initialized")
-logger.info(f"Bot username: {telegram_app.bot.username}")
-
 
 @app.route("/", methods=["GET"])
 def health_check():
@@ -46,14 +45,11 @@ def webhook():
         
     try:
         data = request.get_json()
-        logger.debug(f"Webhook data: {data}")
         update = Update.de_json(data, telegram_app.bot)
         telegram_app.update_queue.put(update)
-        
-        logger.info("Update processed successfully")
         return "OK", 200
     except Exception as e:
-        logger.exception(f"Webhook processing failed: {e}")
+        logger.error(f"Webhook processing error: {e}")
         return "Internal Server Error", 500
 
 async def set_webhook():
@@ -63,8 +59,10 @@ async def set_webhook():
         return
     
     webhook_url = f"{domain}/webhook"
-    result = await telegram_app.bot.set_webhook(webhook_url)
-    logger.info(f"Webhook set to: {webhook_url}, result: {result}")
+    await telegram_app.bot.set_webhook(webhook_url)
+    
+    bot_username = telegram_app.bot.username
+    logger.info(f"Webhook set for bot @{bot_username} to: {webhook_url}")
 
 if __name__ == "__main__":
     loop = asyncio.new_event_loop()
