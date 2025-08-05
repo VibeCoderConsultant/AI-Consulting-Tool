@@ -150,7 +150,7 @@ LANG_OPTIONS = {"🇷🇺 Русский": "ru", "🇬🇧 Английский"
 LANG_BUTTON = "Язык"
 
 
-async def show_main_menu(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data.setdefault("lang", "ru")
     ctx.user_data.setdefault("creativity", 3)
     ctx.user_data.setdefault("mode", "action")
@@ -256,7 +256,7 @@ async def handle_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     lang = user_data.get("lang", "ru")
 
     if text == "Меню":
-        return await show_main_menu(update, ctx)
+        return await start(update, ctx)
 
     if text == LANG_BUTTON:
 
@@ -269,7 +269,7 @@ async def handle_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         user_data['lang'] = LANG_OPTIONS[text]
         lang_name = "Русский" if LANG_OPTIONS[text] == "ru" else "English"
         await update.message.reply_text(f"Язык изменен на {lang_name} / Language changed to {lang_name}")
-        await show_main_menu(update, ctx)
+        await start(update, ctx)
         return
 
     if text.isdigit() and 1 <= int(text) <= 5:
@@ -326,7 +326,7 @@ async def handle_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 def main():
     app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    app.add_handler(CommandHandler("start", show_main_menu))
+    app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_text))
     app.run_polling()
 
