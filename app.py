@@ -35,6 +35,9 @@ def health():
 
 @app.route(f"/webhook/{TOKEN}", methods=["POST"])
 def webhook():
+    logger.info("Received webhook request headers: %s", dict(request.headers))
+    payload = request.get_data(as_text=True)
+    logger.info("Received Webhook payload: %s", payload)
     if request.headers.get("content-type") != "application/json":
         abort(403)
     data = request.get_json(force=True)
@@ -46,6 +49,9 @@ if __name__ == "__main__":
     domain = os.environ.get("RENDER_EXTERNAL_URL")  
     webhook_url = f"{domain}/webhook/{TOKEN}"
     bot.set_webhook(webhook_url)
+    info = BOT.get_webhook_info()
+    logger.info("Webhook info: url=%s, has_custom_certificate=%s, pending_update_count=%s",
+            info.url, info.has_custom_certificate, info.pending_update_count)
     logger.info("Webhook set to %s", webhook_url)
 
     port = int(os.environ.get("PORT", 5000))
