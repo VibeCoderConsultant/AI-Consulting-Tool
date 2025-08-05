@@ -12,7 +12,7 @@ if not os.getenv("TELEGRAM_TOKEN") or not os.getenv("AUTH_KEY"):
     print("Missing TELEGRAM_TOKEN or AUTH_KEY")
     sys.exit(1)
     
-VERIFY_CERT_PATH = os.getenv("VERIFY_CERT_PATH")
+VERIFY_CERT_PATH = os.getenv("VERIFY_CERT_PATH", "certs/russiantrustedca.crt")
 AUTH_KEY = os.getenv("AUTH_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
