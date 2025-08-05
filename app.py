@@ -50,7 +50,7 @@ def webhook():
         
         update = Update.de_json(data, telegram_app.bot)
         
-        telegram_app.update_queue.put(update)
+        telegram_app.update_queue.put_nowait(update)
         
         return "OK", 200
     except Exception as e:
