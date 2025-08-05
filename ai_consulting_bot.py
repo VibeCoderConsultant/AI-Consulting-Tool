@@ -12,10 +12,21 @@ if not os.getenv("TELEGRAM_TOKEN") or not os.getenv("AUTH_KEY"):
     print("Missing TELEGRAM_TOKEN or AUTH_KEY")
     sys.exit(1)
     
-base_dir = os.path.dirname(__file__)
+base_dir = os.path.dirname(os.path.abspath(__file__))
 default_cert = os.path.join(base_dir, "certs", "russiantrustedca.crt")
-
 VERIFY_CERT_PATH = os.getenv("VERIFY_CERT_PATH", default_cert)
+
+if not os.path.exists(VERIFY_CERT_PATH):
+    print(f"❌ Сертификат не найден по пути: {VERIFY_CERT_PATH}")
+    print(f"Текущая директория: {os.getcwd()}")
+    print(f"Содержимое директории: {os.listdir('.')}")
+    if os.path.exists("certs"):
+        print(f"Содержимое папки certs: {os.listdir('certs')}")
+    else:
+        print("Папка certs не существует!")
+else:
+    print(f"✅ Сертификат найден: {VERIFY_CERT_PATH}")
+
 AUTH_KEY = os.getenv("AUTH_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
