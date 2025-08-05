@@ -37,15 +37,20 @@ def health_check():
     return "Bot is running", 200
 
 @app.route("/webhook", methods=["POST"])
-async def webhook():
+def webhook():
+    if request.headers.get("content-type") != "application/json":
+        abort(403)
+        
     try:
-        json_data = await request.get_json()
-        update = Update.de_json(json_data, telegram_app.bot)
-        await telegram_app.update_queue.put(update)
-        return "", 200
+        data = request.get_json()
+        update = Update.de_json(data, telegram_app.bot)
+        
+        application.update_queue.put(update)
+        
+        return "OK", 200
     except Exception as e:
-        logger.error(f"Webhook error: {str(e)}")
-        return "", 500
+        logger.error(f"Webhook processing error: {e}")
+        return "Internal Server Error", 500
 
 async def set_webhook():
     domain = os.getenv("RENDER_EXTERNAL_URL")
@@ -58,9 +63,13 @@ async def set_webhook():
     logger.info(f"Webhook set to: {webhook_url}")
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(set_webhook())
-    
-    app.run(host="0.0.0.0", port=port)
+    try:
+        loop.run_until_complete(set_webhook())
+        
+        port = int(os.environ.get("PORT", 5000))
+        app.run(host="0.0.0.0", port=port)
+    finally:
+        loop.close()
