@@ -7,16 +7,21 @@ from telegram import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, U
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes, CommandHandler
 
 load_dotenv()
+
+print("DEBUG: cwd =", os.getcwd())
+print("DEBUG: files in cwd:", os.listdir())
+print("DEBUG: TELEGRAM_TOKEN:", os.getenv("TELEGRAM_TOKEN"))
+print("DEBUG: AUTH_KEY:", os.getenv("AUTH_KEY"))
+
+if not os.getenv("TELEGRAM_TOKEN") or not os.getenv("AUTH_KEY"):
+    print("❌ Отсутствует TELEGRAM_TOKEN или AUTH_KEY")
+    sys.exit(1)
+    
 VERIFY_CERT_PATH = os.getenv("VERIFY_CERT_PATH")
 AUTH_KEY = os.getenv("AUTH_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 token_cache = {"value": None, "ts": 0, "ttl": 36000}
-
-if not os.getenv("TELEGRAM_TOKEN") or not os.getenv("AUTH_KEY"):
-    print("Отсутствует TELEGRAM_TOKEN или AUTH_KEY")
-    sys.exit(1)
-
 
 def get_access_token() -> str:
     now = time.time()
