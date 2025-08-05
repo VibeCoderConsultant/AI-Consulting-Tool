@@ -2,7 +2,12 @@ import os
 import logging
 from flask import Flask, request, abort
 from telegram import Bot, Update
-from telegram.ext import Dispatcher, CommandHandler, MessageHandler, filters
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    filters,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,16 +16,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TOKEN = os.environ["TELEGRAM_TOKEN"]
-BOT = Bot(TOKEN)
-APP = Flask(__name__)
+bot = Bot(TOKEN)
+app = Flask(__name__)
 
-DP = Dispatcher(BOT, None, workers=0)
+application = (
+    ApplicationBuilder()
+    .token(TOKEN)
+    .build()
+)
 from AI_Consulting_Bot import start, handle_text
 
-DP.add_handler(CommandHandler("start", start))
-DP.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+application.add_handler(CommandHandler("start", start))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
-@APP.route("/", methods=["GET"])
+@app.route("/", methods=["GET"])
 def health():
     return "OK", 200
 
@@ -28,15 +37,16 @@ def health():
 def webhook():
     if request.headers.get("content-type") != "application/json":
         abort(403)
-    payload = request.get_data(as_text=True)
-    update = Update.de_json(request.get_json(force=True), BOT)
-    DP.process_update(update)
+    data = request.get_json(force=True)
+    update = Update.de_json(data, bot)
+    application.dispatcher.process_update(update)
     return "OK", 200
 
 if __name__ == "__main__":
-    domain = os.environ.get("RENDER_EXTERNAL_URL") 
+    domain = os.environ.get("RENDER_EXTERNAL_URL")  
     webhook_url = f"{domain}/webhook/{TOKEN}"
-    BOT.set_webhook(webhook_url)
+    bot.set_webhook(webhook_url)
+    logger.info("Webhook set to %s", webhook_url)
 
     port = int(os.environ.get("PORT", 5000))
-    APP.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port)
