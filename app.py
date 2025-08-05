@@ -43,11 +43,12 @@ def webhook():
     if not data:
         logger.warning("Empty request body")
         abort(400, "Empty request body")
-
+    
+    logger.info(f"Запрос от Telegram: {data}")
     update = Update.de_json(data, telegram_app.bot)
 
     loop = asyncio.get_event_loop()
-    loop.create_task(telegram_app.process_update(update))
+    loop.run_until_complete(telegram_app.process_update(update))
 
     return "OK", 200
 
