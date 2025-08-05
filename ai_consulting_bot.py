@@ -12,9 +12,14 @@ if not os.getenv("TELEGRAM_TOKEN") or not os.getenv("AUTH_KEY"):
     print("Missing TELEGRAM_TOKEN or AUTH_KEY")
     sys.exit(1)
     
-VERIFY_CERT_PATH = os.getenv("VERIFY_CERT_PATH", "certs/russiantrustedca.crt")
+base_dir = os.path.dirname(__file__)
+default_cert = os.path.join(base_dir, "certs", "russiantrustedca.crt")
+
+VERIFY_CERT_PATH = os.getenv("VERIFY_CERT_PATH", default_cert)
 AUTH_KEY = os.getenv("AUTH_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+print(f"Using certificate at: {VERIFY_CERT_PATH}")
 
 token_cache = {"value": None, "ts": 0, "ttl": 36000}
 
@@ -37,20 +42,23 @@ def get_access_token() -> str:
 
 
 def call_gigachat(messages: list, temperature: float, top_p: float = 0.9, max_tokens: int = 120) -> str:
-    token = get_access_token()
-    url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    payload = {
-        "model": "GigaChat",
-        "messages": messages,
-        "temperature": temperature,
-        "top_p": top_p,
-        "max_tokens": max_tokens
-    }
-    resp = requests.post(url, headers=headers, json=payload, verify=VERIFY_CERT_PATH)
-    resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"].strip()
-
+    try:
+        token = get_access_token()
+        url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        payload = {
+            "model": "GigaChat",
+            "messages": messages,
+            "temperature": temperature,
+            "top_p": top_p,
+            "max_tokens": max_tokens
+        }
+        resp = requests.post(url, headers=headers, json=payload, verify=VERIFY_CERT_PATH)
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        logging.error(f"Gigachat API error: {str(e)}")
+        raise
 
 def build_rewrite_messages(text: str, lang: str) -> list:
     if lang == "en":
@@ -329,7 +337,3 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_text))
     app.run_polling()
-
-
-if __name__ == "__main__":
-    main()
