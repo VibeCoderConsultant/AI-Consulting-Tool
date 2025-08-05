@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from telegram import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove, Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes, CommandHandler
 
-load_dotenv(dotenv_path=".venv/int.venv")
+load_dotenv()
 VERIFY_CERT_PATH = os.getenv("VERIFY_CERT_PATH")
 AUTH_KEY = os.getenv("AUTH_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
