@@ -41,24 +41,23 @@ def webhook():
     logger.info(f"📩 RAW body: {request.data}")
 
     if request.headers.get("content-type") != "application/json":
-        logger.warning("❌ Invalid content-type")
+        logger.warning("Invalid content-type")
         abort(400, "Invalid content-type")
 
     data = request.get_json(silent=True)
     if not data:
-        logger.warning("❌ Пустое тело запроса")
+        logger.warning("Empty request body")
         abort(400, "Empty request body")
 
     try:
         update = Update.de_json(data, telegram_app.bot)
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(telegram_app.process_update(update))
 
-        logger.info("✅ Обработка апдейта завершена")
+        asyncio.get_event_loop().create_task(telegram_app.process_update(update))
+
         return "OK", 200
 
     except Exception as e:
-        logger.exception(f"❌ Ошибка при обработке апдейта: {e}")
+        logger.exception(f"Ошибка при обработке апдейта: {e}")
         return "Internal Server Error", 500
 
 async def setup_bot():
