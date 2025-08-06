@@ -2,8 +2,11 @@ import os
 import logging
 import asyncio
 from flask import Flask, request, abort
+from concurrent.futures import ThreadPoolExecutor
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
+
+executor = ThreadPoolExecutor()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,9 +55,11 @@ def webhook():
     try:
         update = Update.de_json(data, telegram_app.bot)
 
-        asyncio.run(telegram_app.process_update(update))
+        def handle():
+            asyncio.run(telegram_app.process_update(update))
 
-        logger.info("✅ Обработка апдейта завершена")
+        executor.submit(handle)
+
         return "OK", 200
 
     except Exception as e:
