@@ -55,13 +55,15 @@ def webhook():
     try:
         update = Update.de_json(data, telegram_app.bot)
 
-        def handler(update):
-            new_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(new_loop)
-            new_loop.run_until_complete(telegram_app.process_update(update))
-            new_loop.close()
+        def handle_in_thread(update_obj):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(telegram_app.process_update(update_obj))
+            finally:
+                loop.close()
 
-        executor.submit(handler, update)
+        executor.submit(handle_in_thread, update)
 
         return "OK", 200
 
