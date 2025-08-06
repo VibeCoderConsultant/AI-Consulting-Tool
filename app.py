@@ -52,12 +52,13 @@ def webhook():
     try:
         update = Update.de_json(data, telegram_app.bot)
 
-        asyncio.get_event_loop().create_task(telegram_app.process_update(update))
+        asyncio.run(telegram_app.process_update(update))
 
+        logger.info("✅ Обработка апдейта завершена")
         return "OK", 200
 
     except Exception as e:
-        logger.exception(f"Ошибка при обработке апдейта: {e}")
+        logger.exception(f"❌ Ошибка при обработке апдейта: {e}")
         return "Internal Server Error", 500
 
 async def setup_bot():
