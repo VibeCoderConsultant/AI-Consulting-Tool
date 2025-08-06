@@ -56,12 +56,12 @@ def webhook():
         update = Update.de_json(data, telegram_app.bot)
 
         def handle_in_thread(update_obj):
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            loop.run_until_complete(telegram_app.process_update(update_obj))
-        except Exception as e:
-            logger.exception(f"Ошибка в обработке update: {e}")
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                loop.run_until_complete(telegram_app.process_update(update_obj))
+            except Exception as e:
+                logger.exception(f"Ошибка в обработке update: {e}")
 
         executor.submit(handle_in_thread, update)
 
