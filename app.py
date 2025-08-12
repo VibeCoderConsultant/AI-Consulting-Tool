@@ -24,7 +24,7 @@ def init_telegram_app():
     token = os.getenv("TELEGRAM_TOKEN")
     application = Application.builder().token(token).build()
 
-    from ai_consulting_bot import start, handle_text
+    from bot.handlers import start, handle_text
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
